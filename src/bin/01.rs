@@ -35,7 +35,6 @@ fn main() -> Result<()> {
             // parse the two numbers and append them to the l and r lists
             l.push(parts.next().unwrap().parse().unwrap());
             r.push(parts.next().unwrap().parse().unwrap());
-
             });
         l.sort();
         r.sort();
@@ -47,13 +46,11 @@ fn main() -> Result<()> {
     fn part1_pq<R: BufRead>(reader: R) -> Result<i32> {
         let mut l = PriorityQueue::new();
         let mut r = PriorityQueue::new();
-        reader.lines().flatten().enumerate().for_each(|(i,line)| {
+        reader.lines().flatten().enumerate().for_each(|(_i,line)| {
             let mut parts = line.split_whitespace();
             // parse the two numbers and append them to the l and r lists
-            let left: i32 = parts.next().unwrap().parse().unwrap();
-            let right: i32 = parts.next().unwrap().parse().unwrap();
-            l.push(i, left);
-            r.push(i, right);
+            l.push(_i, parts.next().unwrap().parse::<i32>().unwrap());
+            r.push(_i, parts.next().unwrap().parse::<i32>().unwrap());
         });
         let answer = l.into_sorted_iter().zip(r.into_sorted_iter()).map(|((_,a), (_,b))| (a - b).abs()).sum();
         Ok(answer)
@@ -64,10 +61,8 @@ fn main() -> Result<()> {
         reader.lines().flatten().enumerate().for_each(|(i,line)| {
             let mut parts = line.split_whitespace();
             // parse the two numbers and append them to the l and r lists
-            let left: i32 = parts.next().unwrap().parse().unwrap();
-            let right: i32 = parts.next().unwrap().parse().unwrap();
-            l.push(left);
-            r.push(right);
+            l.push(parts.next().unwrap().parse::<i32>().unwrap());
+            r.push(parts.next().unwrap().parse::<i32>().unwrap());
         });
         let answer = l.into_iter_sorted().zip(r.into_iter_sorted()).map(|(a,b)| (a - b).abs()).sum();
         Ok(answer)
