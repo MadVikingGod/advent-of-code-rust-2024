@@ -1,10 +1,10 @@
+use adv_code_2024::*;
 use anyhow::*;
+use code_timing_macros::time_snippet;
+use const_format::concatcp;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::str::FromStr;
-use code_timing_macros::time_snippet;
-use const_format::concatcp;
-use adv_code_2024::*;
 
 const DAY: &str = "02";
 const INPUT_FILE: &str = concatcp!("input/", DAY, ".txt");
@@ -26,7 +26,7 @@ fn main() -> Result<()> {
     struct Report(Vec<i32>);
 
     impl FromStr for Report {
-        type Err = anyhow::Error;
+        type Err = Error;
         fn from_str(line: &str) -> Result<Self> {
             Ok(Report::new(line))
         }
@@ -45,19 +45,27 @@ fn main() -> Result<()> {
         fn is_increasing(&self) -> bool {
             self.0.windows(2).all(|w| w[0] <= w[1])
         }
-        fn is_decresing(&self) -> bool {
+        fn is_decreasing(&self) -> bool {
             self.0.windows(2).all(|w| w[0] >= w[1])
         }
         fn safe_distance(&self) -> bool {
-            self.0.windows(2).map(|w| (w[1]-w[0]).abs()).all(|d| d>=1 && d<=3)
+            self.0
+                .windows(2)
+                .map(|w| (w[1] - w[0]).abs())
+                .all(|d| d >= 1 && d <= 3)
         }
         fn is_safe(&self) -> bool {
-            (self.is_increasing() || self.is_decresing()) && self.safe_distance()
+            (self.is_increasing() || self.is_decreasing()) && self.safe_distance()
         }
     }
 
     fn part1<R: BufRead>(reader: R) -> Result<usize> {
-        let answer = reader.lines().flatten().map(Report::from).filter(|r| r.is_safe()).count();
+        let answer = reader
+            .lines()
+            .flatten()
+            .map(Report::from)
+            .filter(|r| r.is_safe())
+            .count();
         Ok(answer)
     }
 
@@ -85,13 +93,20 @@ fn main() -> Result<()> {
     impl Report {
         fn is_safe2(&self) -> bool {
             if self.is_safe() {
-                return true
+                return true;
             };
-            remove_one(self.0.clone()).iter().any(|r| Report(r.clone()).is_safe())
+            remove_one(self.0.clone())
+                .iter()
+                .any(|r| Report(r.clone()).is_safe())
         }
     }
     fn part2<R: BufRead>(reader: R) -> Result<usize> {
-        let answer = reader.lines().flatten().map(Report::from).filter(|r| r.is_safe2()).count();
+        let answer = reader
+            .lines()
+            .flatten()
+            .map(Report::from)
+            .filter(|r| r.is_safe2())
+            .count();
         Ok(answer)
     }
 

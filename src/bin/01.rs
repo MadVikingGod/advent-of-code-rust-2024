@@ -1,13 +1,12 @@
-use std::collections::HashMap;
+use adv_code_2024::*;
 use anyhow::*;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
 use code_timing_macros::time_snippet;
 use const_format::concatcp;
-use priority_queue::PriorityQueue;
-use adv_code_2024::*;
 use dary_heap::DaryHeap;
-
+use priority_queue::PriorityQueue;
+use std::collections::HashMap;
+use std::fs::File;
+use std::io::{BufRead, BufReader};
 
 const DAY: &str = "01";
 const INPUT_FILE: &str = concatcp!("input/", DAY, ".txt");
@@ -35,7 +34,7 @@ fn main() -> Result<()> {
             // parse the two numbers and append them to the l and r lists
             l.push(parts.next().unwrap().parse().unwrap());
             r.push(parts.next().unwrap().parse().unwrap());
-            });
+        });
         l.sort();
         r.sort();
         // Now get the absolute value of the difference between the two lists and sum them
@@ -46,30 +45,37 @@ fn main() -> Result<()> {
     fn part1_pq<R: BufRead>(reader: R) -> Result<i32> {
         let mut l = PriorityQueue::new();
         let mut r = PriorityQueue::new();
-        reader.lines().flatten().enumerate().for_each(|(_i,line)| {
+        reader.lines().flatten().enumerate().for_each(|(_i, line)| {
             let mut parts = line.split_whitespace();
             // parse the two numbers and append them to the l and r lists
             l.push(_i, parts.next().unwrap().parse::<i32>().unwrap());
             r.push(_i, parts.next().unwrap().parse::<i32>().unwrap());
         });
-        let answer = l.into_sorted_iter().zip(r.into_sorted_iter()).map(|((_,a), (_,b))| (a - b).abs()).sum();
+        let answer = l
+            .into_sorted_iter()
+            .zip(r.into_sorted_iter())
+            .map(|((_, a), (_, b))| (a - b).abs())
+            .sum();
         Ok(answer)
     }
-    fn part1_heap<const N:usize, R: BufRead>(reader: R) -> Result<i32> {
+    fn part1_heap<const N: usize, R: BufRead>(reader: R) -> Result<i32> {
         let mut l = DaryHeap::<_, N>::new();
         let mut r = DaryHeap::<_, N>::new();
-        reader.lines().flatten().enumerate().for_each(|(i,line)| {
+        reader.lines().flatten().for_each(|line| {
             let mut parts = line.split_whitespace();
             // parse the two numbers and append them to the l and r lists
             l.push(parts.next().unwrap().parse::<i32>().unwrap());
             r.push(parts.next().unwrap().parse::<i32>().unwrap());
         });
-        let answer = l.into_iter_sorted().zip(r.into_iter_sorted()).map(|(a,b)| (a - b).abs()).sum();
+        let answer = l
+            .into_iter_sorted()
+            .zip(r.into_iter_sorted())
+            .map(|(a, b)| (a - b).abs())
+            .sum();
         Ok(answer)
     }
 
-
-assert_eq!(11, part1(BufReader::new(TEST.as_bytes()))?);
+    assert_eq!(11, part1(BufReader::new(TEST.as_bytes()))?);
 
     let input_file = BufReader::new(File::open(INPUT_FILE)?);
     let result = time_snippet!(part1(input_file)?);
@@ -83,15 +89,15 @@ assert_eq!(11, part1(BufReader::new(TEST.as_bytes()))?);
 
     println!("\n=== Heap 2 ===");
     let input_file = BufReader::new(File::open(INPUT_FILE)?);
-    let result = time_snippet!(part1_heap::<2,_>(input_file)?);
+    let result = time_snippet!(part1_heap::<2, _>(input_file)?);
     println!("Result = {}", result);
     println!("\n=== Heap 5 ===");
     let input_file = BufReader::new(File::open(INPUT_FILE)?);
-    let result = time_snippet!(part1_heap::<5,_>(input_file)?);
+    let result = time_snippet!(part1_heap::<5, _>(input_file)?);
     println!("Result = {}", result);
     println!("\n=== Heap 10 ===");
     let input_file = BufReader::new(File::open(INPUT_FILE)?);
-    let result = time_snippet!(part1_heap::<10,_>(input_file)?);
+    let result = time_snippet!(part1_heap::<10, _>(input_file)?);
     println!("Result = {}", result);
 
     //region Part 2

@@ -1,11 +1,9 @@
-use std::fs;
+use adv_code_2024::*;
 use anyhow::*;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
 use code_timing_macros::time_snippet;
 use const_format::concatcp;
-use adv_code_2024::*;
 use regex::Regex;
+use std::fs;
 
 const DAY: &str = "03";
 const INPUT_FILE: &str = concatcp!("input/", DAY, ".txt");
@@ -20,17 +18,18 @@ fn main() -> Result<()> {
     println!("=== Part 1 ===");
 
     fn part1(input: &str) -> Result<usize> {
-
-        let re = Regex::new(r"mul\((\d{1,3}),(\d{1,3})\)").unwrap();
-        let answer = re.captures_iter(input).map(|cap| {
-            let l = cap[1].parse::<usize>().unwrap();
-            let r = cap[2].parse::<usize>().unwrap();
-            l * r
-        }).sum();
+        let re = Regex::new(r"mul\((\d{1,3}),(\d{1,3})\)")?;
+        let answer = re
+            .captures_iter(input)
+            .map(|cap| {
+                let l = cap[1].parse::<usize>().unwrap();
+                let r = cap[2].parse::<usize>().unwrap();
+                l * r
+            })
+            .sum();
         Ok(answer)
     }
 
-    // TODO: Set the expected answer for the test input
     assert_eq!(161, part1(TEST)?);
 
     let input_file = fs::read_to_string(INPUT_FILE)?;
@@ -42,9 +41,9 @@ fn main() -> Result<()> {
     println!("\n=== Part 2 ===");
 
     fn part2(input: &str) -> Result<usize> {
-        let re = Regex::new(r"(mul\((\d{1,3}),(\d{1,3})\)|don't\(\)|do\(\))").unwrap();
+        let re = Regex::new(r"(mul\((\d{1,3}),(\d{1,3})\)|don't\(\)|do\(\))")?;
         let mut enabled = true;
-        let mut answer:usize = 0;
+        let mut answer: usize = 0;
         for cap in re.captures_iter(input) {
             let c = &cap[0];
             if c.eq("do()") {
@@ -52,8 +51,8 @@ fn main() -> Result<()> {
             } else if c.eq("don't()") {
                 enabled = false;
             } else if enabled {
-                let l = cap[2].parse::<usize>().unwrap();
-                let r = cap[3].parse::<usize>().unwrap();
+                let l = cap[2].parse::<usize>()?;
+                let r = cap[3].parse::<usize>()?;
                 answer += l * r;
             }
         }
