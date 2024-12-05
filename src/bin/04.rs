@@ -25,7 +25,15 @@ fn main() -> Result<()> {
 
     //region Part 1
     println!("=== Part 1 ===");
-    fn get_chars(board: Vec<Vec<char>>, words: Vec<(usize, usize)>) -> Option<Vec<char>> {
+
+    fn get_board<R: BufRead>(reader: R) -> Vec<Vec<char>> {
+        reader
+            .lines()
+            .flatten()
+            .map(|line| line.chars().collect())
+            .collect::<Vec<Vec<char>>>()
+    }
+    fn get_chars(board: &Vec<Vec<char>>, words: Vec<(usize, usize)>) -> Option<Vec<char>> {
         let mut chars = Vec::new();
         for (x, y) in words {
             if let Some(c) = board.get(y).and_then(|row| row.get(x)) {
@@ -37,15 +45,12 @@ fn main() -> Result<()> {
         Some(chars)
     }
 
+
     fn part1<R: BufRead>(reader: R) -> Result<usize> {
         let mut count = 0;
-        let board: Vec<Vec<char>> = reader
-            .lines()
-            .flatten()
-            .map(|line| line.chars().collect())
-            .collect();
+        let board = get_board(reader);
 
-        fn get_words(board: Vec<Vec<char>>, x: usize, y: usize) -> Vec<Vec<char>> {
+        fn get_words(board: &Vec<Vec<char>>, x: usize, y: usize) -> Vec<Vec<char>> {
             let mut pts = vec![
                 vec![(x, y + 1), (x, y + 2), (x, y + 3)],
                 vec![(x + 1, y), (x + 2, y), (x + 3, y)],
@@ -64,17 +69,50 @@ fn main() -> Result<()> {
             }
 
             pts.into_iter()
-                .filter_map(|words| get_chars(board.clone(), words))
+                .filter_map(|words| get_chars(board, words))
                 .collect()
         }
 
         for (y, row) in board.iter().enumerate() {
             for (x, c) in row.iter().enumerate() {
                 if *c == 'X' {
-                    let words = get_words(board.clone(), x, y);
+                    let words = get_words(&board, x, y);
                     for word in words {
                         let s: String = word.iter().collect();
                         if s == "MAS" {
+                            count += 1;
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(count)
+    }
+
+    fn part1_try2<R: BufRead>(reader: R) -> Result<usize> {
+        let mut count = 0;
+        let board = get_board(reader);
+
+        fn get_words(board: &Vec<Vec<char>>, x: usize, y: usize) -> Vec<Vec<char>> {
+            let mut pts = vec![
+                vec![(x,y), (x, y + 1), (x, y + 2), (x, y + 3)],
+                vec![(x,y), (x + 1, y), (x + 2, y), (x + 3, y)],
+                vec![(x,y), (x + 1, y + 1), (x + 2, y + 2), (x + 3, y + 3)],
+            ];
+
+            pts.into_iter()
+                .filter_map(|words| get_chars(board, words))
+                .collect()
+        }
+
+        for (y, row) in board.iter().enumerate() {
+            for (x, c) in row.iter().enumerate() {
+                if *c == 'X' || *c == 'S'{
+                    let words = get_words(&board, x, y);
+                    for word in words {
+                        let s: String = word.iter().collect();
+                        if s == "XMAS" || s == "SAMX" {
                             count += 1;
                         }
                     }
@@ -90,6 +128,12 @@ fn main() -> Result<()> {
     let input_file = BufReader::new(File::open(INPUT_FILE)?);
     let result = time_snippet!(part1(input_file)?);
     println!("Result = {}", result);
+
+    assert_eq!(18, part1_try2(BufReader::new(TEST.as_bytes()))?);
+
+    let input_file = BufReader::new(File::open(INPUT_FILE)?);
+    let result = time_snippet!(part1_try2(input_file)?);
+    println!("Result = {}", result);
     //endregion
 
     //region Part 2
@@ -97,12 +141,9 @@ fn main() -> Result<()> {
 
     fn part2<R: BufRead>(reader: R) -> Result<usize> {
         let mut count = 0;
-        let board: Vec<Vec<char>> = reader
-            .lines()
-            .flatten()
-            .map(|line| line.chars().collect())
-            .collect();
-        fn get_words(board: Vec<Vec<char>>, x: usize, y: usize) -> Vec<String> {
+        let board = get_board(reader);
+
+        fn get_words(board: &Vec<Vec<char>>, x: usize, y: usize) -> Vec<String> {
             if x < 1 || y < 1 {
                 return Vec::new();
             };
@@ -112,7 +153,7 @@ fn main() -> Result<()> {
             ];
             let chars: Vec<Vec<char>> = pts
                 .into_iter()
-                .filter_map(|words| get_chars(board.clone(), words))
+                .filter_map(|words| get_chars(board, words))
                 .collect();
             let chars = chars.iter().map(|chars| chars.iter().collect()).collect();
             chars
@@ -121,7 +162,7 @@ fn main() -> Result<()> {
         for (y, row) in board.iter().enumerate() {
             for (x, c) in row.iter().enumerate() {
                 if *c == 'A' {
-                    let words = get_words(board.clone(), x, y);
+                    let words = get_words(&board, x, y);
                     if words.len() == 2 && words.iter().all(|w| w == "MS" || w == "SM") {
                         count += 1;
                     }
