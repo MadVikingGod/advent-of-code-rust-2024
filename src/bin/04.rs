@@ -45,7 +45,6 @@ fn main() -> Result<()> {
         Some(chars)
     }
 
-
     fn part1<R: BufRead>(reader: R) -> Result<usize> {
         let mut count = 0;
         let board = get_board(reader);
@@ -96,9 +95,9 @@ fn main() -> Result<()> {
 
         fn get_words(board: &Vec<Vec<char>>, x: usize, y: usize) -> Vec<Vec<char>> {
             let mut pts = vec![
-                vec![(x,y), (x, y + 1), (x, y + 2), (x, y + 3)],
-                vec![(x,y), (x + 1, y), (x + 2, y), (x + 3, y)],
-                vec![(x,y), (x + 1, y + 1), (x + 2, y + 2), (x + 3, y + 3)],
+                vec![(x, y), (x, y + 1), (x, y + 2), (x, y + 3)],
+                vec![(x, y), (x + 1, y), (x + 2, y), (x + 3, y)],
+                vec![(x, y), (x + 1, y + 1), (x + 2, y + 2), (x + 3, y + 3)],
             ];
 
             pts.into_iter()
@@ -108,7 +107,7 @@ fn main() -> Result<()> {
 
         for (y, row) in board.iter().enumerate() {
             for (x, c) in row.iter().enumerate() {
-                if *c == 'X' || *c == 'S'{
+                if *c == 'X' || *c == 'S' {
                     let words = get_words(&board, x, y);
                     for word in words {
                         let s: String = word.iter().collect();

@@ -1,8 +1,8 @@
-use std::collections::{HashMap, HashSet};
 use adv_code_2024::*;
 use anyhow::*;
 use code_timing_macros::time_snippet;
 use const_format::concatcp;
+use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
@@ -61,10 +61,15 @@ fn parse_books<R: BufRead>(reader: R) -> Vec<Vec<usize>> {
 }
 
 fn is_valid(orders: &HashMap<usize, Vec<usize>>, book: &Vec<usize>) -> bool {
-    book.iter().rev().enumerate().all(|(i,page)| {
-        let remaining = book.iter().rev().skip(i+1).cloned().collect::<HashSet<usize>>();
+    book.iter().rev().enumerate().all(|(i, page)| {
+        let remaining = book
+            .iter()
+            .rev()
+            .skip(i + 1)
+            .cloned()
+            .collect::<HashSet<usize>>();
         let before = orders.get(page).cloned().unwrap_or(Vec::new());
-        ! before.iter().any(|b| remaining.contains(b))
+        !before.iter().any(|b| remaining.contains(b))
     })
 }
 
@@ -78,13 +83,20 @@ fn main() -> Result<()> {
         let orders = parse_orders(orders);
         let books = parse_books(books);
 
-        Ok(books.iter()
+        Ok(books
+            .iter()
             .filter(|&book| is_valid(&orders, book))
-            .map(|book| book[book.len()/2])
+            .map(|book| book[book.len() / 2])
             .sum())
     }
 
-    assert_eq!(143, part1(BufReader::new(TEST_ORDER.as_bytes()), BufReader::new(TEST_BOOKS.as_bytes()))?);
+    assert_eq!(
+        143,
+        part1(
+            BufReader::new(TEST_ORDER.as_bytes()),
+            BufReader::new(TEST_BOOKS.as_bytes())
+        )?
+    );
 
     let input_books = BufReader::new(File::open(INPUT_BOOKS)?);
     let input_order = BufReader::new(File::open(INPUT_ORDER)?);
@@ -99,7 +111,8 @@ fn main() -> Result<()> {
         let orders = parse_orders(orders);
         let books = parse_books(books);
 
-        Ok(books.iter()
+        Ok(books
+            .iter()
             .filter(|&book| !is_valid(&orders, book))
             .map(|book| {
                 let mut book = book.clone();
@@ -118,7 +131,13 @@ fn main() -> Result<()> {
             .sum())
     }
 
-    assert_eq!(123, part2(BufReader::new(TEST_ORDER.as_bytes()), BufReader::new(TEST_BOOKS.as_bytes()))?);
+    assert_eq!(
+        123,
+        part2(
+            BufReader::new(TEST_ORDER.as_bytes()),
+            BufReader::new(TEST_BOOKS.as_bytes())
+        )?
+    );
 
     let input_books = BufReader::new(File::open(INPUT_BOOKS)?);
     let input_order = BufReader::new(File::open(INPUT_ORDER)?);
