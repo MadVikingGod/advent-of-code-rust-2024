@@ -21,7 +21,7 @@ const TEST: &str = "\
 #.........
 ......#...";
 
-type Point = (i32, i32);
+// type Point = (i32, i32);
 #[derive(Eq, Hash, PartialEq, Clone)]
 enum Direction {
     Up,
@@ -31,76 +31,58 @@ enum Direction {
 }
 #[derive(Clone)]
 enum Tile {
-    Off,
     Full,
     Empty,
 }
 
-#[derive(Clone)]
-struct Map {
-    map: HashMap<Point, Tile>,
-    bounds: Point,
+impl TryFrom<char> for Tile {
+    type Error = Error;
+    fn try_from(c: char) -> Result<Self> {
+        match c {
+            '#' => Ok(Tile::Full),
+            '.' => Ok(Tile::Empty),
+            '^' => Ok(Tile::Empty),
+            _ => Err(anyhow!("Invalid character: {}", c))
+        }
+    }
 }
 
 #[derive(Clone)]
 struct State {
-    pos: Point,
+    pos: Point<i32>,
     dir: Direction,
 }
 
-impl Map {
-    fn parse<R: BufRead>(reader: R) -> Result<(Self, State)> {
-        let mut map = HashMap::new();
-        let mut state = State {
-            pos: (0, 0),
-            dir: Direction::Up,
-        };
-        let lines = reader.lines();
-        let mut y_max = 0;
-        let mut x_max = 0;
-        for (y, line) in lines.enumerate() {
-            y_max = y as i32;
-            let line = line?;
-            x_max = line.len() as i32;
-            for (x, c) in line.chars().enumerate() {
-                let point = (x as i32, y as i32);
-                let tile = match c {
-                    '#' => Tile::Full,
-                    '.' => Tile::Empty,
-                    '^' => {
-                        state.pos = point;
-                        Tile::Empty
-                    },
-                    _ => return Err(anyhow!("Invalid character: {}", c))
-                };
-                map.insert(point, tile);
-            }
-        }
-        Ok((Map{map:map, bounds:(x_max, y_max)}, state))
-    }
-    fn get(&self, point: &Point) -> Tile {
-        self.map.get(point).cloned().unwrap_or(Tile::Off)
-    }
-    fn repr(&self, seen:&Seen) -> String {
-        let mut result = String::new();
-        for y in 0..self.bounds.1 {
-            for x in 0..self.bounds.0 {
-                let point = (x, y);
-                let c = match (self.get(&point), seen.map.contains_key(&point)) {
-                    (Tile::Full,_) => '#',
-                    (Tile::Empty, false) => '.',
-                    (Tile::Empty, true) => 'X',
-                    (Tile::Off,_) => {continue},
-                };
-                result.push(c);
-            }
-            result.push('\n');
-        }
-        result
-    }
+fn parse<R: BufRead>(reader: R) -> Result<(Map<Tile>, State)> {
+    let (map,start) = Map::parse_with_start(reader, &'^')?;
+    let start = State {
+        pos: start,
+        dir: Direction::Up,
+    };
+    Ok((map, start))
 }
+fn repr(map: &Map<Tile>, seen:&Seen) -> String {
+    let mut result = String::new();
+    for y in 0..=map.max.y {
+        for x in 0..=map.max.x {
+            let point = (x, y).into();
+            let c = match (map.get(&point), seen.map.contains_key(&point)) {
+                (Some(Tile::Full),_) => '#',
+                (Some(Tile::Empty), false) => '.',
+                (Some(Tile::Empty), true) => 'X',
+                _ => {continue},
+
+            };
+            result.push(c);
+        }
+        result.push('\n');
+    }
+    result
+}
+
+
 struct Seen {
-    map: HashMap<Point, HashSet<Direction>>
+    map: HashMap<Point<i32>, HashSet<Direction>>
 }
 impl Seen {
     fn new() -> Self {
@@ -116,7 +98,7 @@ impl Seen {
     }
 }
 
-fn find_path(map: &Map, start: &State) -> (Seen, bool) {
+fn find_path(map: &Map<Tile>, start: &State) -> (Seen, bool) {
     let mut seen = Seen::new();
     let mut state = start.clone();
     loop {
@@ -125,16 +107,16 @@ fn find_path(map: &Map, start: &State) -> (Seen, bool) {
         }
         seen.insert(&state);
         let next = match state.dir {
-            Direction::Up => (state.pos.0, state.pos.1 - 1),
-            Direction::Down => (state.pos.0, state.pos.1 + 1),
-            Direction::Left => (state.pos.0 - 1, state.pos.1),
-            Direction::Right => (state.pos.0 + 1, state.pos.1),
+            Direction::Up => state.pos + Point{ x: 0, y: -1 },
+            Direction::Down => state.pos + Point{ x: 0, y: 1 },
+            Direction::Left => state.pos + Point{ x: -1, y: 0 },
+            Direction::Right => state.pos + Point{ x: 1, y: 0 },
         };
         match map.get(&next) {
-            Tile::Empty => {
+            Some(Tile::Empty) => {
                 state.pos = next;
             },
-            Tile::Full => {
+            Some(Tile::Full) => {
                 state.dir = match state.dir {
                     Direction::Up => Direction::Right,
                     Direction::Right => Direction::Down,
@@ -142,7 +124,7 @@ fn find_path(map: &Map, start: &State) -> (Seen, bool) {
                     Direction::Left => Direction::Up,
                 };
             }
-            Tile::Off => {
+            None => {
                 return (seen, true);
             }
         }
@@ -157,12 +139,10 @@ fn main() -> Result<()> {
 
     fn part1<R: BufRead>(reader: R) -> Result<usize> {
 
-        let (map, mut state) = Map::parse(reader)?;
-
-        let mut seen = Seen::new();
+        let (map, mut state) = parse(reader)?;
         let (seen,_) = find_path(&map, &state);
 
-        println!("{}", map.repr(&seen));
+        println!("{}", repr(&map, &seen));
         Ok(seen.map.len())
     }
 
@@ -178,13 +158,13 @@ fn main() -> Result<()> {
     println!("\n=== Part 2 ===");
 
     fn part2<R: BufRead>(reader: R) -> Result<usize> {
-        let (map, mut state) = Map::parse(reader)?;
+        let (map, mut state) = parse(reader)?;
         let mut count :usize = 0;
-        for y in 0..=map.bounds.1 {
-            for x in 0..=map.bounds.0 {
+        for y in map.min.y..=map.max.y {
+            for x in map.min.y..=map.max.x {
                 let point = (x, y);
                 let mut map = map.clone();
-                map.map.insert(point, Tile::Full);
+                map.insert(point.into(), Tile::Full);
                 let (_,offmap) = find_path(&map, &state);
                 if !offmap {
                     count += 1;
