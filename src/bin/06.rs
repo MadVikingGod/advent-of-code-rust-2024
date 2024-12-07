@@ -159,18 +159,19 @@ fn main() -> Result<()> {
 
     fn part2<R: BufRead>(reader: R) -> Result<usize> {
         let (map, mut state) = parse(reader)?;
+        let (seen,_) = find_path(&map, &state);
+
         let mut count :usize = 0;
-        for y in map.min.y..=map.max.y {
-            for x in map.min.y..=map.max.x {
-                let point = (x, y);
-                let mut map = map.clone();
-                map.insert(point.into(), Tile::Full);
-                let (_,offmap) = find_path(&map, &state);
-                if !offmap {
-                    count += 1;
-                }
+        let start_point = state.pos.clone();
+        for point in seen.map.keys().filter(|&p| *p != start_point) {
+            let mut map = map.clone();
+            map.insert(point.clone(), Tile::Full);
+            let (_,offmap) = find_path(&map, &state);
+            if !offmap {
+                count += 1;
             }
         }
+
         Ok(count)
     }
 
